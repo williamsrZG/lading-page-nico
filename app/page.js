@@ -2,6 +2,7 @@ import LandingForm from "./LandingForm";
 import { getPhone } from "@/lib/kv";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export default async function Home() {
   const phone = await getPhone();
