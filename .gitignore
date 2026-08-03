@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+.env
+.env.local
+.vercel
+npm-debug.log*
+.claude/settings.local.json
