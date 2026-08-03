@@ -32,7 +32,7 @@ export default function LandingForm({ phone }) {
       window.fbq("track", "Lead", { content_name: "bono_15" });
     }
 
-    const cleanPhone = (phone || "").replace(/\D/g, "");
+    const cleanPhone = String(phone || "").replace(/\D/g, "");
     const message = `Hola! Quiero mi BONO del 15%. Mi nombre es ${trimmed}.`;
     const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 
