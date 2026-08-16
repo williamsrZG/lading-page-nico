@@ -1,11 +1,11 @@
 import LandingForm from "./LandingForm";
-import { getPhone } from "@/lib/kv";
+import { getActivePhone } from "@/lib/kv";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 export default async function Home() {
-  const phone = await getPhone();
+  const phone = await getActivePhone();
 
   return (
     <main className="page">

@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 
+const EMPTY_SHIFTS = [
+  { phone: "", start: "00:00", end: "12:00" },
+  { phone: "", start: "12:00", end: "00:00" },
+];
+
 export default function AdminPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
@@ -10,11 +15,11 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
 
-  const [phone, setPhone] = useState("");
+  const [shifts, setShifts] = useState(EMPTY_SHIFTS);
   const [savedMessage, setSavedMessage] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [loadingPhone, setLoadingPhone] = useState(false);
+  const [loadingSchedule, setLoadingSchedule] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/session")
@@ -27,12 +32,22 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!loggedIn) return;
-    setLoadingPhone(true);
-    fetch("/api/phone")
+    setLoadingSchedule(true);
+    fetch("/api/schedule")
       .then((r) => r.json())
-      .then((data) => setPhone(data.phone || ""))
-      .finally(() => setLoadingPhone(false));
+      .then((data) => {
+        if (Array.isArray(data.shifts) && data.shifts.length === 2) {
+          setShifts(data.shifts);
+        }
+      })
+      .finally(() => setLoadingSchedule(false));
   }, [loggedIn]);
+
+  function updateShift(index, field, value) {
+    setShifts((prev) => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)));
+    if (saveError) setSaveError("");
+    if (savedMessage) setSavedMessage("");
+  }
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -64,18 +79,18 @@ export default function AdminPage() {
     setSavedMessage("");
     setSaving(true);
     try {
-      const res = await fetch("/api/phone", {
+      const res = await fetch("/api/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ shifts }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setSaveError(data.error || "No se pudo guardar el numero");
+        setSaveError(data.error || "No se pudo guardar el horario");
         return;
       }
-      setPhone(data.phone);
-      setSavedMessage("Numero actualizado correctamente.");
+      setShifts(data.shifts);
+      setSavedMessage("Numeros y horarios actualizados correctamente.");
     } catch (err) {
       setSaveError("Error de conexion. Intenta de nuevo.");
     } finally {
@@ -87,7 +102,7 @@ export default function AdminPage() {
     await fetch("/api/admin/logout", { method: "POST" });
     setLoggedIn(false);
     setPassword("");
-    setPhone("");
+    setShifts(EMPTY_SHIFTS);
     setSavedMessage("");
     setSaveError("");
   }
@@ -128,24 +143,49 @@ export default function AdminPage() {
   return (
     <main className="page">
       <p className="eyebrow">PANEL ADMIN</p>
-      <div className="info-pill">NUMERO DE WHATSAPP</div>
+      <div className="info-pill">NUMEROS Y HORARIOS DE WHATSAPP</div>
       <form className="form" onSubmit={handleSave} noValidate>
-        <input
-          type="text"
-          className={`field${saveError ? " field-error" : ""}`}
-          placeholder="Ej: 5491122334455"
-          value={phone}
-          disabled={loadingPhone}
-          onChange={(e) => {
-            setPhone(e.target.value);
-            if (saveError) setSaveError("");
-            if (savedMessage) setSavedMessage("");
-          }}
-        />
-        <p className="hint-text">Codigo de pais + numero, solo digitos. Sin +, espacios ni guiones.</p>
+        {shifts.map((shift, i) => (
+          <div className="shift-block" key={i}>
+            <p className="shift-title">Numero {i + 1}</p>
+            <input
+              type="text"
+              className="field"
+              placeholder="Ej: 5491122334455"
+              value={shift.phone}
+              disabled={loadingSchedule}
+              onChange={(e) => updateShift(i, "phone", e.target.value)}
+            />
+            <div className="time-row">
+              <label className="time-field">
+                <span>Desde</span>
+                <input
+                  type="time"
+                  className="field"
+                  value={shift.start}
+                  disabled={loadingSchedule}
+                  onChange={(e) => updateShift(i, "start", e.target.value)}
+                />
+              </label>
+              <label className="time-field">
+                <span>Hasta</span>
+                <input
+                  type="time"
+                  className="field"
+                  value={shift.end}
+                  disabled={loadingSchedule}
+                  onChange={(e) => updateShift(i, "end", e.target.value)}
+                />
+              </label>
+            </div>
+          </div>
+        ))}
+        <p className="hint-text">
+          Horarios en huso horario de Argentina. Fuera del rango del Numero 1 se usa automaticamente el Numero 2.
+        </p>
         {saveError ? <p className="error-text">{saveError}</p> : null}
         {savedMessage ? <p className="success-text">{savedMessage}</p> : null}
-        <button type="submit" className="submit-btn" disabled={saving || loadingPhone}>
+        <button type="submit" className="submit-btn" disabled={saving || loadingSchedule}>
           {saving ? "Guardando..." : "Guardar cambios"}
         </button>
       </form>
