@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 const MAX_SHIFTS = 24;
+const MAX_MESSAGE_LENGTH = 500;
+const PREVIEW_NAME = "Juan";
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const EMPTY_SHIFTS = [{ phone: "", start: "09:00", end: "12:00" }];
 
@@ -58,6 +60,7 @@ export default function AdminPage() {
   const [loggingIn, setLoggingIn] = useState(false);
 
   const [shifts, setShifts] = useState(EMPTY_SHIFTS);
+  const [message, setMessage] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
   const [savedMessage, setSavedMessage] = useState("");
   const [saveError, setSaveError] = useState("");
@@ -85,6 +88,7 @@ export default function AdminPage() {
           setShifts(data.shifts);
           setActiveIndex(data.activeIndex ?? null);
         }
+        if (typeof data.message === "string") setMessage(data.message);
       })
       .finally(() => setLoadingSchedule(false));
   }, [loggedIn]);
@@ -156,7 +160,7 @@ export default function AdminPage() {
       const res = await fetch("/api/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shifts }),
+        body: JSON.stringify({ shifts, message }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -164,6 +168,7 @@ export default function AdminPage() {
         return;
       }
       setShifts(data.shifts);
+      setMessage(data.message);
       setActiveIndex(data.activeIndex ?? null);
       setSavedMessage("Numeros y horarios actualizados correctamente.");
     } catch (err) {
@@ -178,6 +183,7 @@ export default function AdminPage() {
     setLoggedIn(false);
     setPassword("");
     setShifts(EMPTY_SHIFTS);
+    setMessage("");
     setActiveIndex(null);
     setSavedMessage("");
     setSaveError("");
@@ -307,6 +313,30 @@ export default function AdminPage() {
             Numero 1.
           </p>
         ) : null}
+
+        <div className="shift-block">
+          <p className="shift-title">Mensaje de WhatsApp</p>
+          <textarea
+            className="field field-textarea"
+            rows={3}
+            maxLength={MAX_MESSAGE_LENGTH}
+            placeholder="Ej: Hola! Quiero mi BONO del 15%. Mi nombre es {nombre}."
+            value={message}
+            disabled={loadingSchedule}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              clearMessages();
+            }}
+          />
+          <p className="message-hint">
+            Escribi <code>{"{nombre}"}</code> donde quieras que aparezca el nombre que pone el cliente.
+          </p>
+          {message.trim() ? (
+            <p className="message-preview">
+              <span>Vista previa:</span> {message.replace(/\{nombre\}/gi, () => PREVIEW_NAME)}
+            </p>
+          ) : null}
+        </div>
 
         <p className="hint-text">
           Horarios en huso horario de Argentina. Si dos turnos se pisan, gana el que esta mas arriba. Si

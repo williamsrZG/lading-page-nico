@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getActiveState, setSchedule, validateShifts } from "@/lib/kv";
+import { getActiveState, setSchedule, validateMessage, validateShifts } from "@/lib/kv";
 import { SESSION_COOKIE, isValidSessionToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -22,13 +22,13 @@ export async function POST(request) {
   }
 
   const body = await request.json().catch(() => null);
-  const error = validateShifts(body?.shifts);
+  const error = validateShifts(body?.shifts) || validateMessage(body?.message);
   if (error) {
     return NextResponse.json({ error }, { status: 400 });
   }
 
   try {
-    await setSchedule({ shifts: body.shifts });
+    await setSchedule({ shifts: body.shifts, message: body.message });
   } catch (err) {
     return NextResponse.json({ error: err.message || "No se pudo guardar el horario." }, { status: 500 });
   }

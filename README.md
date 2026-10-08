@@ -2,7 +2,8 @@
 
 Landing page (Next.js) con formulario de nombre que redirige a WhatsApp, Facebook Pixel
 y un panel `/admin` protegido por contrasena para configurar **todos los numeros de WhatsApp
-que haga falta, cada uno con su horario**, sin tocar codigo.
+que haga falta, cada uno con su horario**, y el mensaje que
+se envia por WhatsApp, sin tocar codigo.
 
 ## Correr en local
 
@@ -81,8 +82,10 @@ turno en el que cae esa hora. Reglas:
 El visitante completa su nombre y al tocar "OBTENER MI BONO AHORA":
 
 1. Se dispara el evento `Lead` del Facebook Pixel (si esta configurado).
-2. Se arma un link `https://wa.me/<numero>?text=...` con un mensaje que incluye el nombre,
-   usando el numero del turno activo en ese momento.
+2. Se arma un link `https://wa.me/<numero>?text=...` con el mensaje configurado en `/admin`,
+   usando el numero del turno activo en ese momento. En el mensaje, `{nombre}` se reemplaza
+   por el nombre que puso el visitante. Por defecto es:
+   `Hola! Quiero mi BONO del 15%. Mi nombre es {nombre}.`
 3. Se redirige al visitante directo a WhatsApp con el mensaje ya escrito.
 
 ## Estructura

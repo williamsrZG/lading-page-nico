@@ -11,7 +11,7 @@ function WhatsAppIcon() {
   );
 }
 
-export default function LandingForm({ phone }) {
+export default function LandingForm({ phone, message }) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -33,8 +33,8 @@ export default function LandingForm({ phone }) {
     }
 
     const cleanPhone = String(phone || "").replace(/\D/g, "");
-    const message = `Hola! Quiero mi BONO del 15%. Mi nombre es ${trimmed}.`;
-    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    const text = String(message || "").replace(/\{nombre\}/gi, () => trimmed);
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
 
     window.location.href = url;
   }
